@@ -1,0 +1,67 @@
+html, body, #map-canvas {
+  height: 100%;
+  margin: 0px;
+  padding: 0px
+}
+#map-panvas{
+ height: 80%;
+  margin: 0px;
+  padding: 0px
+}
+
+#panel {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  margin-left: -180px;
+  z-index: 6;
+  background-color: #fff;
+  padding: 5px;
+  border: 1px solid #999;
+}
+
+
+	#csv {
+	 white-space: pre;
+	 font-family:"Courier New", Courier, monospace;
+	 -webkit-border-radius: 6px;
+	 -moz-border-radius: 6px;
+	 border-radius: 6px;
+	 background-color: white;
+	 padding: 5px;
+	}
+      #directions-panel {
+        height: 100%;
+        float: left;
+        width: 190px;
+        overflow: auto;
+      }
+
+      #ratings-panel {
+        height:100%;
+        float: right;
+        width: 390px;
+        overflow: auto;
+      }
+
+      #control {
+        background: #fff;
+        padding: 5px;
+        font-size: 14px;
+        font-family: Arial;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4);
+        display: none;
+      }
+
+      @media print {
+        #map-canvas {
+          height: 500px;
+          margin: 0;
+        }
+
+        #directions-panel {
+          float: none;
+          width: auto;
+        }
+      }

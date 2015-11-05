@@ -1,0 +1,100 @@
+extends ../layouts/layout
+
+block head
+  title #{pacFrom} &middot; #{pacTo} &middot; #{application}
+
+block styles
+
+block content
+  .jumbotron.white
+    h2 #{pacFrom} to #{pacTo}!
+    .col-sm-3.container
+      h4 Suggested Routes:
+    .row.hidden-xs
+    .col-sm-3
+      #route-buttons
+    .col-sm-9
+      .container.page
+        .col-sm-6
+          #content
+          .col-sm-6
+           #extract
+        .col-sm-5.map
+          #map-canvas.well.google-map-canvas
+    .row
+
+//- Page-specific stuff
+block scripts
+  //- Async load odometer styles
+  script.
+    var start = "#{pacFrom}";
+    var end = "#{pacTo}";
+    var directionsService = new google.maps.DirectionsService();
+    var directionsDisplay = new google.maps.DirectionsRenderer;
+    var map = new google.maps.Map(document.getElementById('map-canvas'), {
+        zoom: 7,
+        center: {lat: 22, lng: 83}
+    });
+    directionsDisplay.setMap(map);
+    // directionsDisplay.setPanel(document.getElementById('directions-panel'));
+    var request = {
+        origin:start,
+        destination:end,
+        travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: true,
+        avoidHighways: false
+    };
+    directionsService.route(request, function(response, status) {
+      if (status == google.maps.DirectionsStatus.OK) {
+          for (var p = 0; p < response.routes.length; p++) {
+              var leg = response.routes[p].legs[0];
+              var button='<button id="button' + p +'" class="btn btn-success btn-lg" onclick="selectRouteIndex(' + p + ')">' + "Rating:" + '<i class="fa fa-fw fa-twitter"></i>&nbsp;<br><font size="3">' + "Distance:" + response.routes[p].legs[0].distance.text + '<br>' + "Time:" +response.routes[p].legs[0].duration.text + '</font></button>&nbsp;<br>';
+              $("#route-buttons").append(button);
+              directionsDisplay.setDirections(response);
+              for (var i = 0; i < leg.steps.length; i++) {
+                if (leg.steps[i].distance.value > 10000) {
+                  var start_lat = leg.steps[i].start_location.lat();; 
+                  var start_lng = leg.steps[i].start_location.lng();; 
+                  getRoadId(start_lat, start_lng);
+                }
+              }
+          }
+          document.getElementById('content').innerHTML = response.routes.length;
+      } else {
+          console.log(status);
+      }
+    });
+
+    function getRoadId(start_lat, start_lng) {
+        var searchRoad = {
+                  "start_lat": start_lat,
+                  "start_lng": start_lng
+        }
+        $.ajax({
+            type: 'POST',
+            data: searchRoad,
+            url: '/getroad',
+            dataType: 'JSON'
+        }).done(function( data ) {
+            $.each(data, function(){
+              console.log(this._id);
+            });
+        });
+    }
+    function selectRouteIndex(routeIndex) {
+        directionsDisplay.setRouteIndex(routeIndex);
+    }
+
+  //- Tweak the styles a bit...
+  style.
+    .page {
+        font-size: 20px;
+        background-color: #5cb85c;
+        border-style: solid;
+        border-color: #878a8c;
+    }
+    #map-canvas {
+        width:90%;
+        height: 330px;
+    }
+    .google-map-canvas,.google-map-canvas * { box-sizing:content-box; }
