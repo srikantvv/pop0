@@ -28,17 +28,9 @@ var mongoose  = require('mongoose');
 // performance impact. Disable the behavior by setting the
 // autoIndex option of your schema to false.
 
-var roadSchema = new mongoose.Schema({
+var latLngSchema = new mongoose.Schema({
+  lat: { type: Number },
+  lng: { type: Number }
+});
 
-  start_lat: { type: Number },
-  start_lng: { type: Number },
-  end_lat: { type: Number },
-  end_lng: { type: Number },
-  enc_path: { type: String },
-  midpath: [{ lat: Number, lng: Number }],
-  type: { type: String, default: 'road' },
-  distance: { type: Number }
-
-}, { collection: 'roads' });
-
-module.exports = mongoose.model('Road', roadSchema);
+module.exports = mongoose.model('LatLng', latLngSchema);

@@ -6,29 +6,44 @@ block head
 block styles
 
 block content
-  .jumbotron.white
-    h2 #{pacFrom} to #{pacTo}!
-    .col-sm-3.container
-      h4 Suggested Routes:
-    .row.hidden-xs
-    .col-sm-3
-      #route-buttons
-    .col-sm-9
-      .container.page
-        .col-sm-6
-          #content
-          .col-sm-6
-           #extract
-        .col-sm-5.map
-          #map-canvas.well.google-map-canvas
-    .row
+    #control
+      b Start: 
+      input#start(type='textbox', value='Bangalore, Karnataka')
+      b End: 
+      input#end(type='textbox', value='Hyderabad, Telangana')
+      input(type='button', value='Directions', onclick='calcOneRoute();')
+      input(type='button', value='Show My step DB', onclick='populateStepMap();')
+      input(type='button', value='Show My road DB', onclick='populateRoadMap();')
+      input(type='button', value='Show My rel DB', onclick='populateRelMap();')
+      input#enc_path(type='textbox', value='')
+      input(type='button', value='ShowthisPoly', onclick='showthisPoly();')
+      input(type='button', value='Start Populating', onclick='startPopulate();')
+      input(type='button', value='Get all Roads', onclick='getAllRoads();')
+      input#roadid(type='textbox', value='')
+      input(type='button', value='show steps of this road', onclick='showSteps();')
+      input#roadtorel(type='textbox', value='Road to rel')
+      input(type='button', value='Road to Rel', onclick='roadToRel();')
+      input#subRoad(type='textbox', value='subRoadID')
+      input#superRoad(type='textbox', value='superRoadID')
+      input(type='button', value='Make same road', onclick='subRoad();')
+      input#subRel(type='textbox', value='subRelID')
+      input#superRel(type='textbox', value='superRelID')
+      input(type='button', value='Make same rel', onclick='subRel();')
+    #directions-panel
+    #ratings-panel
+    #map-canvas
 
 //- Page-specific stuff
 block scripts
   //- Async load odometer styles
   script.
-    var start = "#{pacFrom}";
-    var end = "#{pacTo}";
+    function round_num(num, dec) {
+      return Math.round(num * Math.pow(10, dec)) / Math.pow(10, dec);
+    }
+
+    function calcOneRoute() {
+    var start = document.getElementById('start').value;
+    var end = document.getElementById('end').value;
     var directionsService = new google.maps.DirectionsService();
     var directionsDisplay = new google.maps.DirectionsRenderer;
     var map = new google.maps.Map(document.getElementById('map-canvas'), {
@@ -48,22 +63,60 @@ block scripts
       if (status == google.maps.DirectionsStatus.OK) {
           for (var p = 0; p < response.routes.length; p++) {
               var leg = response.routes[p].legs[0];
-              var button='<button id="button' + p +'" class="btn btn-success btn-lg" onclick="selectRouteIndex(' + p + ')">' + "Rating:" + '<i class="fa fa-fw fa-twitter"></i>&nbsp;<br><font size="3">' + "Distance:" + response.routes[p].legs[0].distance.text + '<br>' + "Time:" +response.routes[p].legs[0].duration.text + '</font></button>&nbsp;<br>';
-              $("#route-buttons").append(button);
               directionsDisplay.setDirections(response);
               for (var i = 0; i < leg.steps.length; i++) {
                 if (leg.steps[i].distance.value > 10000) {
-                  var start_lat = leg.steps[i].start_location.lat();; 
-                  var start_lng = leg.steps[i].start_location.lng();; 
-                  getRoadId(start_lat, start_lng);
+                  var startLat = round_num(leg.steps[i].start_location.lat(),6); 
+                  var startLng = round_num(leg.steps[i].start_location.lng(),6); 
+                  var endLng = round_num(leg.steps[i].start_location.lng(),6);
+                  var endLat = round_num(leg.steps[i].start_location.lat(),6); 
+                  var path = leg.steps[i].path;
+                  var encodeString = google.maps.geometry.encoding.encodePath(path);
+                  var stepDis = leg.steps[i].distance.value;
+                  var midLatLng = [];
+                  var distanceinKm = stepDis/5000
+                  console.log(distanceinKm,stepDis)
+                  var mid = Math.ceil(path.length/2);
+                  var midDis = Math.round(path.length/distanceinKm);
+                  var midMin = mid - 10;
+                  var midMax = mid + 10;
+                  for(var k = 2; k < distanceinKm - 1; k++) {
+                    midLatLng.push({
+                     "lat" : round_num(path[k*midDis].lat(),2),
+                     "lng" : round_num(path[k*midDis].lng(),2)
+                    });
+                  }
+                  postRoad(startLat, startLng, endLat, endLng, encodeString, midLatLng, stepDis);
+
                 }
               }
           }
-          document.getElementById('content').innerHTML = response.routes.length;
       } else {
           console.log(status);
       }
     });
+    }
+
+    function postRoad(startLat, startLng, endLat, endLng, encodeString, midLatLng, stepDis) {
+        var postRoad = {
+                  "start_lat": startLat,
+                  "start_lng": startLng,
+                  "end_lat": endLat,
+                  "end_lng": endLng,
+                  "encodeString": encodeString,
+                  "midLatLng": midLatLng,
+                  "distance" : stepDis
+        }
+        $.ajax({
+            type: 'POST',
+            data: postRoad,
+            url: '/postroad',
+            dataType: 'JSON'
+        }).done(function( data ) {
+            $.each(data, function(){
+            });
+        });
+    }
 
     function getRoadId(start_lat, start_lng) {
         var searchRoad = {

@@ -59,7 +59,7 @@ config.loggly.json    = true;
  */
 
 config.mongodb        = {};
-config.mongodb.url    = process.env.MONGODB_URL || 'mongodb://admin:roadadmin8*@ds033103.mongolab.com:33103/roadrev';
+config.mongodb.url    = process.env.MONGODB_URL || 'localhost:27017/serv1';
 
 /**
  * Session Configuration
